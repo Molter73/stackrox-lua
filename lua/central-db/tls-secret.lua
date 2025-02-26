@@ -1,15 +1,16 @@
 local M = {}
 local f = require('utils.file')
 
-M.setup = function(labels, annotations)
+M.setup = function(opts)
+    local o = opts or {}
     return {
         apiVersion = 'v1',
         kind = 'Secret',
         metadata = {
             name = 'central-db-tls',
             namespace = 'stackrox',
-            labels = labels or {},
-            annotations = annotations or {},
+            labels = o.labels,
+            annotations = o.annotations,
         },
         type = 'Opaque',
         stringData = {

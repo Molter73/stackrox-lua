@@ -1,14 +1,15 @@
 local M = {}
 
-M.setup = function(labels, annotations)
+M.setup = function(opts)
+    local o = opts or {}
     return {
         apiVersion = 'networking.k8s.io/v1',
         kind = 'NetworkPolicy',
         metadata = {
             name = 'central-db',
             namespace = 'stackrox',
-            labels = labels or {},
-            annotations = annotations or {},
+            labels = o.labels,
+            annotations = o.annotations,
         },
         spec = {
             policyTypes = {

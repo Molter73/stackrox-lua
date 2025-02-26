@@ -192,15 +192,16 @@ local container = {
 
 local labeler = require('labeler')
 
-M.setup = function(labels, annotations)
+M.setup = function(opts)
+    local o = opts or {}
     return {
         apiVersion = 'apps/v1',
         kind = 'Deployment',
         metadata = {
             name = 'central',
             namespace = 'stackrox',
-            labels = labels,
-            annotations = annotations,
+            labels = o.labels,
+            annotations = o.annotations,
         },
         spec = {
             replicas = 1,
@@ -210,8 +211,8 @@ M.setup = function(labels, annotations)
             template = {
                 metadata = {
                     namespace = 'stackrox',
-                    labels = labels,
-                    annotations = labeler(annotations, {
+                    labels = o.labels,
+                    annotations = labeler(o.annotations, {
                         ['traffic.sidecar.istio.io/excludeInboundPorts'] = '8443',
                     }),
                 },

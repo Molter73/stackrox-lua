@@ -1,15 +1,16 @@
 local M = {}
 local f = require('utils.file')
 
-M.setup = function(labels, annotations)
+M.setup = function(opts)
+    local o = opts or {}
     return {
         apiVersion = 'v1',
         kind = 'ConfigMap',
         metadata = {
             name = 'central-db-config',
             namespace = 'stackrox',
-            labels = labels or {},
-            annotations = annotations or {},
+            labels = o.labels,
+            annotations = o.annotations,
         },
         data = {
             ['postgresql.conf'] = f.readAll('config/postgresql.conf.default'),

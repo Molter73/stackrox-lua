@@ -1,28 +1,31 @@
 local M = {}
 
-M.setup = function(labels, annotations)
-    M.labels = labels or {}
-    M.annotations = annotations or {}
+M.setup = function(opts)
+    M.opts = opts or {}
     M.label = require('labeler')
     return M
 end
 
-local setup = function(mod, l, a)
-    local labels = M.label(M.labels, l)
-    local annotations = M.label(M.annotations, a)
-    return mod.setup(labels, annotations)
+local setup = function(mod, opts)
+    local o = opts or {}
+    local labels = M.label(M.opts.labels, o.labels)
+    local annotations = M.label(M.opts.annotations, o.annotations)
+    return mod.setup({
+        labels = labels,
+        annotations = annotations,
+    })
 end
 
-M.rbac = function(labels, annotations)
-    return setup(require('config-controller.rbac'), labels, annotations)
+M.rbac = function(opts)
+    return setup(require('config-controller.rbac'), opts)
 end
 
-M.serviceaccount = function(labels, annotations)
-    return setup(require('config-controller.serviceaccount'), labels, annotations)
+M.serviceaccount = function(opts)
+    return setup(require('config-controller.serviceaccount'), opts)
 end
 
-M.deployment = function(labels, annotations)
-    return setup(require('config-controller.deployment'), labels, annotations)
+M.deployment = function(opts)
+    return setup(require('config-controller.deployment'), opts)
 end
 
 return M

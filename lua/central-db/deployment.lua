@@ -1,10 +1,5 @@
 local M = {}
 
-local metadata = {
-    name = 'central-db',
-    namespace = 'stackrox',
-}
-
 local securityContext = {
     runAsUser = 70,
     runAsGroup = 70,
@@ -87,15 +82,16 @@ local volumes = {
     { name = 'shared-memory', emptyDir = { medium = 'Memory', sizeLimit = '2Gi' } },
 }
 
-M.setup = function(labels, annotations)
+M.setup = function(opts)
+    local o = opts or {}
     return {
         apiVersion = 'apps/v1',
         kind = 'Deployment',
         metadata = {
             name = 'central-db',
             namespace = 'stackrox',
-            labels = labels or {},
-            annotations = annotations or {},
+            labels = o.labels,
+            annotations = o.annotations,
         },
         spec = {
             replicas = 1,

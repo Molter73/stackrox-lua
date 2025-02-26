@@ -57,15 +57,16 @@ local manager = {
     } }
 }
 
-M.setup = function(labels, annotations)
+M.setup = function(opts)
+    local o = opts or {}
     return {
         apiVersion = 'apps/v1',
         kind = 'Deployment',
         metadata = {
             name = 'config-controller',
             namespace = 'stackrox',
-            labels = labels,
-            annotations = annotations,
+            labels = o.labels,
+            annotations = o.annotations,
         },
         spec = {
             replicas = 1,
@@ -75,7 +76,7 @@ M.setup = function(labels, annotations)
             template = {
                 metadata = {
                     namespace = 'stackrox',
-                    labels = labels,
+                    labels = o.labels,
                 },
                 spec = {
                     serviceAccountName = 'config-controller',

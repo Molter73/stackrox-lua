@@ -1,14 +1,15 @@
 local M = {}
 
-M.setup = function(labels, annotations)
+M.setup = function(opts)
+    local o = opts or {}
     return {
         apiVersion = 'v1',
         kind = 'ServiceAccount',
         metadata = {
             name = 'central-db',
             namespace = 'stackrox',
-            labels = labels or {},
-            annotations = annotations or {},
+            labels = o.labels,
+            annotations = o.annotations,
         },
         imagePullSecrets = {
             { name = 'stackrox' },

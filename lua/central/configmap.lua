@@ -1,14 +1,15 @@
 local M = {}
 
-M.setup = function(labels, annotations)
+M.setup = function(opts)
+    local o = opts or {}
     return {
         apiVersion = 'v1',
         kind = 'ConfigMap',
         metadata = {
             name = 'central-config',
             namespace = 'stackrox',
-            labels = labels,
-            annotations = annotations,
+            labels = o.labels,
+            annotations = o.annotations,
         },
         data = {
             ['central-config.yaml'] = [[
