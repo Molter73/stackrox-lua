@@ -87,60 +87,38 @@ local volumes = {
     { name = 'shared-memory', emptyDir = { medium = 'Memory', sizeLimit = '2Gi' } },
 }
 
-M.deployment = {
-    apiVersion = 'apps/v1',
-    kind = 'Deployment',
-    metadata = metadata,
-    spec = {
-        replicas = 1,
-        minReadySeconds = 15,
-        selector = { matchLabels = { app = 'central-db' } },
-        strategy = { type = 'Recreate' },
-        template = {
-            metadata = {
-                namespace = 'stackrox',
-                labels = { app = 'central-db' },
-            },
-            spec = {
-                affinity = require('central-affinity'),
-                serviceAccountName = 'central-db',
-                terminationGracePeriodSeconds = 120,
-                initContainers = { initContainer },
-                containers = { container },
-                securityContext = { fsGroup = 70 },
-                volumes = volumes,
+M.setup = function(labels, annotations)
+    return {
+        apiVersion = 'apps/v1',
+        kind = 'Deployment',
+        metadata = {
+            name = 'central-db',
+            namespace = 'stackrox',
+            labels = labels or {},
+            annotations = annotations or {},
+        },
+        spec = {
+            replicas = 1,
+            minReadySeconds = 15,
+            selector = { matchLabels = { app = 'central-db' } },
+            strategy = { type = 'Recreate' },
+            template = {
+                metadata = {
+                    namespace = 'stackrox',
+                    labels = { app = 'central-db' },
+                },
+                spec = {
+                    affinity = require('central-affinity'),
+                    serviceAccountName = 'central-db',
+                    terminationGracePeriodSeconds = 120,
+                    initContainers = { initContainer },
+                    containers = { container },
+                    securityContext = { fsGroup = 70 },
+                    volumes = volumes,
+                },
             },
         },
-    },
-}
-
-M.service = {
-    apiVersion = 'v1',
-    kind = 'Service',
-    metadata = metadata,
-    spec = {
-        ports = {
-            {
-                name = 'tcp-db',
-                port = 5432,
-                protocol = 'TCP',
-                targetPort = 'postgresql',
-            },
-        },
-        selector = { app = 'central-db' },
-        type = 'ClusterIP',
-    },
-}
-
-M.secret = {
-    apiVersion = 'v1',
-    kind = 'Secret',
-    metadata = {
-        name = 'central-db-password',
-        namespace = 'stackrox',
-    },
-    type = 'Opaque',
-    stringData = { password = '1234' },
-}
+    }
+end
 
 return M

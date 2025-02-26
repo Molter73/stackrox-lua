@@ -1,3 +1,5 @@
+local M = {}
+
 local env = {
     {
         name = 'ROX_MEMLIMIT',
@@ -188,37 +190,44 @@ local container = {
     volumeMounts = volumeMounts,
 }
 
-return {
-    apiVersion = 'apps/v1',
-    kind = 'Deployment',
-    metadata = {
-        name = 'central',
-        namespace = 'stackrox',
-        labels = { app = 'central' },
-    },
-    spec = {
-        replicas = 1,
-        minReadySeconds = 15,
-        selector = { matchLabels = { app = 'central' } },
-        strategy = { type = 'Recreate' },
-        template = {
-            metadata = {
-                namespace = 'stackrox',
-                labels = { app = 'central' },
-                annotations = {
-                    ['traffic.sidecar.istio.io/excludeInboundPorts'] = '8443',
+local labeler = require('labeler')
+
+M.setup = function(labels, annotations)
+    return {
+        apiVersion = 'apps/v1',
+        kind = 'Deployment',
+        metadata = {
+            name = 'central',
+            namespace = 'stackrox',
+            labels = labels,
+            annotations = annotations,
+        },
+        spec = {
+            replicas = 1,
+            minReadySeconds = 15,
+            selector = { matchLabels = { app = 'central' } },
+            strategy = { type = 'Recreate' },
+            template = {
+                metadata = {
+                    namespace = 'stackrox',
+                    labels = labels,
+                    annotations = labeler(annotations, {
+                        ['traffic.sidecar.istio.io/excludeInboundPorts'] = '8443',
+                    }),
                 },
-            },
-            spec = {
-                affinity = require('central-affinity'),
-                serviceAccountName = 'central',
-                securityContext = {
-                    fsGroup = 4000,
-                    runAsUser = 4000,
+                spec = {
+                    affinity = require('central-affinity'),
+                    serviceAccountName = 'central',
+                    securityContext = {
+                        fsGroup = 4000,
+                        runAsUser = 4000,
+                    },
+                    containers = { container },
+                    volumes = volumes,
                 },
-                containers = { container },
-                volumes = volumes,
             },
         },
-    },
-}
+    }
+end
+
+return M

@@ -1,12 +1,17 @@
-return {
-    apiVersion = 'v1',
-    kind = 'ConfigMap',
-    metadata = {
-        name = 'central-external-db',
-        namespace = 'stackrox',
-    },
-    data = {
-        ['central-external-db.yaml'] = [[
+local M = {}
+
+M.setup = function(labels, annotations)
+    return {
+        apiVersion = 'v1',
+        kind = 'ConfigMap',
+        metadata = {
+            name = 'central-external-db',
+            namespace = 'stackrox',
+            labels = labels,
+            annotations = annotations,
+        },
+        data = {
+            ['central-external-db.yaml'] = [[
     centralDB:
       external: false
       source: >
@@ -20,5 +25,8 @@ return {
         pool_max_conns=90
         client_encoding=UTF8
             ]],
+        }
     }
-}
+end
+
+return M

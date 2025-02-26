@@ -5,14 +5,21 @@ M.setup = function(labels, annotations)
         apiVersion = 'v1',
         kind = 'Service',
         metadata = {
-            name = 'central',
+            name = 'central-db',
             namespace = 'stackrox',
             labels = labels,
             annotations = annotations,
         },
         spec = {
-            ports = { { name = 'https', port = 443, targetPort = 'api' } },
-            selector = { app = 'central' },
+            ports = {
+                {
+                    name = 'tcp-db',
+                    port = 5432,
+                    protocol = 'TCP',
+                    targetPort = 'postgresql',
+                },
+            },
+            selector = { app = 'central-db' },
             type = 'ClusterIP',
         },
     }

@@ -1,5 +1,11 @@
 local M = {}
 
+M.setup = function(labels, annotations)
+    M.labels = labels
+    M.annotations = annotations
+    return M
+end
+
 local rule = {
     apiGroups = { 'config.stackrox.io' },
     resources = {
@@ -23,6 +29,8 @@ M.role = {
     metadata = {
         name = 'config-controller-manager-role',
         namespace = 'stackrox',
+        labels = M.labels,
+        annotations = M.annotations,
     },
     rules = { rule },
 }
@@ -33,6 +41,8 @@ M.roleBinding = {
     metadata = {
         name = 'config-controller-manager-rolebinding',
         namespace = 'stackrox',
+        labels = M.labels,
+        annotations = M.annotations,
     },
     roleRef = {
         apiGroup = 'rbac.authorization.k8s.io',

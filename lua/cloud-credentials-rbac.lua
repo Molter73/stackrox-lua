@@ -1,11 +1,19 @@
 local M = {}
 
+M.setup = function(labels, annotations)
+    M.labels = labels
+    M.annotations = annotations
+    return M
+end
+
 M.role = {
     apiVersion = 'rbac.authorization.k8s.io/v1',
     kind = 'Role',
     metadata = {
         name = 'central-sts-config-reader',
         namespace = 'stackrox',
+        labels = M.labels,
+        annotations = M.annotations,
     },
     rules = {
         {
@@ -27,6 +35,8 @@ M.roleBinding = {
     metadata = {
         name = 'central-sts-config-reader',
         namespace = 'stackrox',
+        labels = M.labels,
+        annotations = M.annotations,
     },
     subjects = {
         {
