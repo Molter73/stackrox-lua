@@ -1,10 +1,29 @@
+-- configurable items
+local main_image = {
+    registry = main_registry or 'quay.io/stackrox-io',
+    name = main_name or 'main',
+    tag = main_tag or '4.8.x-48-gbc8957943f',
+    fullRef = main_ref or nil,
+}
+
+local db_image = {
+    registry = db_registry or 'quay.io/stackrox-io',
+    name = db_name or 'central-db',
+    tag = db_tag or '4.8.x-48-gbc8957943f',
+    fullRef = db_ref or nil,
+}
+
+local image = require('utils.image')
+image.build(main_image)
+image.build(db_image)
+
 local labels = {
     ['app.kubernetes.io/component'] = 'central',
     ['app.kubernetes.io/instance'] = 'stackrox-central-services',
     ['app.kubernetes.io/managed-by'] = 'Helm',
     ['app.kubernetes.io/name'] = 'stackrox',
     ['app.kubernetes.io/part-of'] = 'stackrox-central-services',
-    ['app.kubernetes.io/version'] = '4.8.x-48-gbc8957943f',
+    ['app.kubernetes.io/version'] = main_image.tag,
     ['helm.sh/chart'] = 'stackrox-central-services-400.8.0-48-gbc8957943f',
 }
 
@@ -52,13 +71,22 @@ return {
     central.endpoints_configmap(),
     central_db.networkpolicy(),
     central.networkpolicy(),
-    central_db.deployment({ labels = { app = 'central-db' } }),
+    central_db.deployment({
+        image = db_image,
+        labels = { app = 'central-db' },
+    }),
     central_db.service(),
     central_db.secret(),
-    central.deployment({ labels = { app = 'central' } }),
+    central.deployment({
+        image = main_image,
+        labels = { app = 'central' },
+    }),
     central.service(),
     config_controller.serviceaccount(),
     config_controller_rbac.role,
     config_controller_rbac.roleBinding,
-    config_controller.deployment({ labels = { app = 'config-controller' } })
+    config_controller.deployment({
+        image = main_image,
+        labels = { app = 'config-controller' }
+    })
 }

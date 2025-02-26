@@ -1,61 +1,63 @@
 local M = {}
 
-local manager = {
-    name = 'manager',
-    image = 'quay.io/stackrox-io/main:4.8.x-48-gbc8957943f',
-    command = { '/stackrox/bin/config-controller' },
-    args = { '--health-probe-bind-address=:8081' },
-    env = {
-        {
-            name = 'POD_NAMESPACE',
-            valueFrom = {
-                fieldRef = { fieldPath = 'metadata.namespace' },
-            }
+local manager = function(image)
+    return {
+        name = 'manager',
+        image = image.fullRef,
+        command = { '/stackrox/bin/config-controller' },
+        args = { '--health-probe-bind-address=:8081' },
+        env = {
+            {
+                name = 'POD_NAMESPACE',
+                valueFrom = {
+                    fieldRef = { fieldPath = 'metadata.namespace' },
+                }
+            },
+            { name = 'ROX_DECLARATIVE_CONFIGURATION', value = 'true' },
+            { name = 'ROX_DEVELOPMENT_BUILD',         value = 'true' },
+            { name = 'ROX_HOTRELOAD',                 value = 'false' },
+            { name = 'ROX_MANAGED_CENTRAL',           value = 'false' },
+            { name = 'ROX_NETWORK_ACCESS_LOG',        value = 'false' },
         },
-        { name = 'ROX_DECLARATIVE_CONFIGURATION', value = 'true' },
-        { name = 'ROX_DEVELOPMENT_BUILD',         value = 'true' },
-        { name = 'ROX_HOTRELOAD',                 value = 'false' },
-        { name = 'ROX_MANAGED_CENTRAL',           value = 'false' },
-        { name = 'ROX_NETWORK_ACCESS_LOG',        value = 'false' },
-    },
-    livenessProbe = {
-        httpGet = {
-            path = '/healthz',
-            port = 8081,
+        livenessProbe = {
+            httpGet = {
+                path = '/healthz',
+                port = 8081,
+            },
+            initialDelaySeconds = 15,
+            periodSeconds = 20,
+            failureThreshold = 50,
         },
-        initialDelaySeconds = 15,
-        periodSeconds = 20,
-        failureThreshold = 50,
-    },
-    readinessProbe = {
-        httpGet = {
-            path = '/healthz',
-            port = 8081,
+        readinessProbe = {
+            httpGet = {
+                path = '/healthz',
+                port = 8081,
+            },
+            initialDelaySeconds = 5,
+            periodSeconds = 10,
         },
-        initialDelaySeconds = 5,
-        periodSeconds = 10,
-    },
-    securityContext = {
-        allowPrivilegeEscalation = false,
-        capabilities = { drop = { 'ALL' } },
-        readOnlyRootFilesystem = true,
-    },
-    resources = {
-        requests = {
-            cpu = '10m',
-            memory = '64Mi',
+        securityContext = {
+            allowPrivilegeEscalation = false,
+            capabilities = { drop = { 'ALL' } },
+            readOnlyRootFilesystem = true,
         },
-        limits = {
-            cpu = '500m',
-            memory = '128Mi',
+        resources = {
+            requests = {
+                cpu = '10m',
+                memory = '64Mi',
+            },
+            limits = {
+                cpu = '500m',
+                memory = '128Mi',
+            },
         },
-    },
-    volumeMounts = { {
-        name = 'central-certs-volume',
-        mountPath = '/run/secrets/stackrox.io/certs/',
-        readOnly = true,
-    } }
-}
+        volumeMounts = { {
+            name = 'central-certs-volume',
+            mountPath = '/run/secrets/stackrox.io/certs/',
+            readOnly = true,
+        } }
+    }
+end
 
 M.setup = function(opts)
     local o = opts or {}
@@ -85,7 +87,7 @@ M.setup = function(opts)
                         runAsUser = 4000,
                     },
                     containers = {
-                        manager,
+                        manager(o.image),
                     },
                     terminationGracePeriodSeconds = 10,
                     volumes = { {

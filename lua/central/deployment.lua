@@ -158,50 +158,51 @@ local volumes = {
     },
 }
 
-local container = {
-    name = 'central',
-    image = 'quay.io/stackrox-io/main:4.8.x-48-gbc8957943f',
-    command = { '/stackrox/central-entrypoint.sh' },
-    ports = { { containerPort = 8443, name = 'api' } },
-    readinessProbe = {
-        httpGet = {
-            scheme = 'HTTPS',
-            path = '/v1/ping',
-            port = 8443,
+local container = function(image)
+    return {
+        name = 'central',
+        image = image.fullRef,
+        command = { '/stackrox/central-entrypoint.sh' },
+        ports = { { containerPort = 8443, name = 'api' } },
+        readinessProbe = {
+            httpGet = {
+                scheme = 'HTTPS',
+                path = '/v1/ping',
+                port = 8443,
+            },
         },
-    },
-    resources = {
-        limits = {
-            cpu = '4000m',
-            memory = '8Gi',
+        resources = {
+            limits = {
+                cpu = '4000m',
+                memory = '8Gi',
+            },
+            requests = {
+                cpu = '1500m',
+                memory = '4Gi',
+            },
         },
-        requests = {
-            cpu = '1500m',
-            memory = '4Gi',
+        securityContext = {
+            capabilities = {
+                drop = { 'NET_RAW' },
+            },
+            readOnlyRootFilesystem = true,
         },
-    },
-    securityContext = {
-        capabilities = {
-            drop = { 'NET_RAW' },
-        },
-        readOnlyRootFilesystem = true,
-    },
-    env = env,
-    volumeMounts = volumeMounts,
-}
+        env = env,
+        volumeMounts = volumeMounts,
+    }
+end
 
 local labeler = require('labeler')
 
 M.setup = function(opts)
-    local o = opts or {}
     return {
         apiVersion = 'apps/v1',
         kind = 'Deployment',
         metadata = {
             name = 'central',
             namespace = 'stackrox',
-            labels = o.labels,
-            annotations = o.annotations,
+            labels = opts.labels,
+            annotations = opts.annotations,
         },
         spec = {
             replicas = 1,
@@ -211,8 +212,8 @@ M.setup = function(opts)
             template = {
                 metadata = {
                     namespace = 'stackrox',
-                    labels = o.labels,
-                    annotations = labeler(o.annotations, {
+                    labels = opts.labels,
+                    annotations = labeler(opts.annotations, {
                         ['traffic.sidecar.istio.io/excludeInboundPorts'] = '8443',
                     }),
                 },
@@ -223,7 +224,7 @@ M.setup = function(opts)
                         fsGroup = 4000,
                         runAsUser = 4000,
                     },
-                    containers = { container },
+                    containers = { container(opts.image) },
                     volumes = volumes,
                 },
             },

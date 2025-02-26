@@ -16,52 +16,56 @@ local resources = {
     },
 }
 
-local initContainer = {
-    name = 'init-db',
-    image = 'quay.io/stackrox-io/central-db:4.8.x-48-gbc8957943f',
-    env = {
-        { name = 'PGDATA', value = '/var/lib/postgresql/data/pgdata' },
-    },
-    command = { 'init-entrypoint.sh' },
-    volumeMounts = {
-        { name = 'disk',                mountPath = '/var/lib/postgresql/data' },
-        { name = 'central-db-password', mountPath = '/run/secrets/stackrox.io/secrets' },
-    },
-    resources = resources,
-    securityContext = securityContext,
-}
-
-local container = {
-    name = 'central-db',
-    image = 'quay.io/stackrox-io/central-db:4.8.x-48-gbc8957943f',
-    env = {
-        { name = 'POSTGRES_HOST_AUTH_METHOD', value = 'password' },
-        { name = 'PGDATA',                    value = '/var/lib/postgresql/data/pgdata' },
-    },
-    ports = { { containerPort = 5432, name = 'postgresql', protocol = 'TCP' } },
-    readinessProbe = {
-        exec = {
-            command = {
-                '/bin/sh',
-                '-c',
-                '-e',
-                'exec pg_isready -U "postgresql" -h 127.0.0.1 -p 5432',
-            },
+local initContainer = function(image)
+    return {
+        name = 'init-db',
+        image = image.fullRef,
+        env = {
+            { name = 'PGDATA', value = '/var/lib/postgresql/data/pgdata' },
         },
-        failureThreshold = 3,
-        periodSeconds = 10,
-        successThreshold = 1,
-        timeoutSeconds = 1,
-    },
-    resources = resources,
-    securityContext = securityContext,
-    volumeMounts = {
-        { name = 'config-volume',         mountPath = '/etc/stackrox.d/config' },
-        { name = 'disk',                  mountPath = '/var/lib/postgresql/data' },
-        { name = 'central-db-tls-volume', mountPath = '/run/secrets/stackrox.io/certs' },
-        { name = 'shared-memory',         mountPath = '/dev/shm' },
-    },
-}
+        command = { 'init-entrypoint.sh' },
+        volumeMounts = {
+            { name = 'disk',                mountPath = '/var/lib/postgresql/data' },
+            { name = 'central-db-password', mountPath = '/run/secrets/stackrox.io/secrets' },
+        },
+        resources = resources,
+        securityContext = securityContext,
+    }
+end
+
+local container = function(image)
+    return {
+        name = 'central-db',
+        image = image.fullRef,
+        env = {
+            { name = 'POSTGRES_HOST_AUTH_METHOD', value = 'password' },
+            { name = 'PGDATA',                    value = '/var/lib/postgresql/data/pgdata' },
+        },
+        ports = { { containerPort = 5432, name = 'postgresql', protocol = 'TCP' } },
+        readinessProbe = {
+            exec = {
+                command = {
+                    '/bin/sh',
+                    '-c',
+                    '-e',
+                    'exec pg_isready -U "postgresql" -h 127.0.0.1 -p 5432',
+                },
+            },
+            failureThreshold = 3,
+            periodSeconds = 10,
+            successThreshold = 1,
+            timeoutSeconds = 1,
+        },
+        resources = resources,
+        securityContext = securityContext,
+        volumeMounts = {
+            { name = 'config-volume',         mountPath = '/etc/stackrox.d/config' },
+            { name = 'disk',                  mountPath = '/var/lib/postgresql/data' },
+            { name = 'central-db-tls-volume', mountPath = '/run/secrets/stackrox.io/certs' },
+            { name = 'shared-memory',         mountPath = '/dev/shm' },
+        },
+    }
+end
 
 local volumes = {
     { name = 'disk',                emptyDir = {} },
@@ -107,8 +111,8 @@ M.setup = function(opts)
                     affinity = require('central-affinity'),
                     serviceAccountName = 'central-db',
                     terminationGracePeriodSeconds = 120,
-                    initContainers = { initContainer },
-                    containers = { container },
+                    initContainers = { initContainer(o.image) },
+                    containers = { container(o.image) },
                     securityContext = { fsGroup = 70 },
                     volumes = volumes,
                 },

@@ -13,6 +13,7 @@ local setup = function(mod, opts)
     return mod.setup({
         labels = labels,
         annotations = annotations,
+        image = o.image,
     })
 end
 
